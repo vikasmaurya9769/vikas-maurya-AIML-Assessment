@@ -21,6 +21,7 @@ from sklearn.metrics import (
     confusion_matrix
 )
 from sklearn.utils.class_weight import compute_class_weight
+from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
 
@@ -230,27 +231,6 @@ def engineer_features(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.Dat
 
     return df
 
-'''def main():
-
-    leads, interactions = load_data(
-        LEADS_PATH,
-        INTERACTIONS_PATH
-    )
-
-    leads = derive_target(
-        leads,
-        interactions
-    )
-
-    df = engineer_features(
-        leads,
-        interactions
-    )
-
-    log.info("Feature engineering completed successfully")
-'''
-
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. PREPROCESSING
@@ -329,30 +309,6 @@ def preprocess(df: pd.DataFrame):
     )
     return X, y, feature_names
 
-'''
-def main():
-
-    leads, interactions = load_data(
-        LEADS_PATH,
-        INTERACTIONS_PATH
-    )
-
-    leads = derive_target(
-        leads,
-        interactions
-    )
-
-    df = engineer_features(
-        leads,
-        interactions
-    )
-
-    X, y, feature_names = preprocess(df)
-
-    print("X Shape:", X.shape)
-    print("Y Shape:", y.shape)
-    print("Features:", len(feature_names))
-'''
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -425,6 +381,15 @@ def train_models(X_train, X_test, y_train, y_test, feature_names):
             max_depth=4,
             subsample=0.8,
             random_state=42
+        ),
+        "XGBoost": XGBClassifier(
+            n_estimators=300,
+            max_depth=6,
+            learning_rate=0.05,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            random_state=42,
+            eval_metric="logloss"
         ),
     }
 
@@ -638,6 +603,30 @@ def plot_roc_curve(
     )
 
 
+def save_model_artifacts(
+    best_model,
+    feature_names
+):
+    os.makedirs(
+        "models",
+        exist_ok=True
+    )
+
+    joblib.dump(
+        best_model,
+        "models/best_model.pkl"
+    )
+
+    joblib.dump(
+        feature_names,
+        "models/feature_names.pkl"
+    )
+
+    log.info(
+        "Saved model artifacts successfully"
+    )
+
+
 def main():
 
     # Load data
@@ -673,6 +662,11 @@ def main():
         X_test,
         y_train,
         y_test,
+        feature_names
+    )
+
+    save_model_artifacts(
+        best_model,
         feature_names
     )
 
