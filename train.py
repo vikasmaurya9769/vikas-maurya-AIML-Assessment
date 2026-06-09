@@ -329,7 +329,7 @@ def preprocess(df: pd.DataFrame):
     )
     return X, y, feature_names
 
-
+'''
 def main():
 
     leads, interactions = load_data(
@@ -352,6 +352,179 @@ def main():
     print("X Shape:", X.shape)
     print("Y Shape:", y.shape)
     print("Features:", len(feature_names))
+'''
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. TRAIN & EVALUATE MODELS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def split_data(X, y):
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        test_size=0.20,
+        stratify=y,
+        random_state=42
+    )
+
+    log.info(
+        "Train shape: %s | Test shape: %s",
+        X_train.shape,
+        X_test.shape
+    )
+
+    return X_train, X_test, y_train, y_test
+
+def evaluate_model(model, X_test, y_test, name: str) -> dict:
+    """Compute all required metrics for a fitted model."""
+    y_pred  = model.predict(X_test)
+    y_proba = model.predict_proba(X_test)[:, 1]
+
+    metrics = {
+        "model":     name,
+        "accuracy":  round(accuracy_score(y_test, y_pred),              4),
+        "precision": round(precision_score(y_test, y_pred,  zero_division=0), 4),
+        "recall":    round(recall_score(y_test, y_pred,     zero_division=0), 4),
+        "f1":        round(f1_score(y_test, y_pred,         zero_division=0), 4),
+        "auc_roc":   round(roc_auc_score(y_test, y_proba),              4),
+    }
+    return metrics
+
+
+def train_models(X_train, X_test, y_train, y_test, feature_names):
+    """
+    Train Logistic Regression, Random Forest, and Gradient Boosting.
+    Return the best model (by F1 score) and all results.
+    """
+    # Class weights to handle imbalance
+    cw = compute_class_weight("balanced", classes=np.unique(y_train), y=y_train)
+    class_weight = {0: cw[0], 1: cw[1]}
+
+    models = {
+        "Logistic Regression": Pipeline([
+            ("scaler", StandardScaler()),
+            ("clf",    LogisticRegression(
+                class_weight=class_weight,
+                max_iter=1000,
+                random_state=42
+            ))
+        ]),
+        "Random Forest": RandomForestClassifier(
+            n_estimators=300,
+            max_depth=10,
+            min_samples_leaf=3,
+            class_weight=class_weight,
+            random_state=42,
+            n_jobs=-1
+        ),
+        "Gradient Boosting": GradientBoostingClassifier(
+            n_estimators=200,
+            learning_rate=0.05,
+            max_depth=4,
+            subsample=0.8,
+            random_state=42
+        ),
+    }
+
+    results   = []
+    best_f1   = -1
+    best_model = None
+    best_name  = ""
+
+    for name, model in models.items():
+        log.info("Training %s ...", name)
+        model.fit(X_train, y_train)
+        metrics = evaluate_model(model, X_test, y_test, name)
+        results.append(metrics)
+        print("\n", metrics)
+
+        log.info(
+            "  %s → Acc=%.3f  Pre=%.3f  Rec=%.3f  F1=%.3f  AUC=%.3f",
+            name, metrics["accuracy"], metrics["precision"],
+            metrics["recall"], metrics["f1"], metrics["auc_roc"]
+        )
+
+        if metrics["f1"] > best_f1:
+            best_f1    = metrics["f1"]
+            best_model = model
+            best_name  = name
+
+    log.info("Best model: %s (F1=%.3f)", best_name, best_f1)
+    best_metrics = next(
+        r for r in results
+        if r["model"] == best_name
+    )
+
+    log.info("Best model metrics: %s", best_metrics)
+
+    # Cross-validation for best model
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    X_all = np.vstack([X_train, X_test])
+    y_all = np.concatenate([y_train, y_test])
+    cv_scores = cross_val_score(best_model, X_all, y_all, cv=cv, scoring="f1")
+    log.info("CV F1 scores: %s | Mean: %.3f ± %.3f",
+             cv_scores.round(3), cv_scores.mean(), cv_scores.std())
+
+    return best_model, best_name, results, cv_scores
+
+def main():
+
+    # Load data
+    leads, interactions = load_data(
+        LEADS_PATH,
+        INTERACTIONS_PATH
+    )
+
+    # Create target
+    leads = derive_target(
+        leads,
+        interactions
+    )
+
+    # Feature engineering
+    df = engineer_features(
+        leads,
+        interactions
+    )
+
+    # Preprocessing
+    X, y, feature_names = preprocess(df)
+
+    # Train-test split
+    X_train, X_test, y_train, y_test = split_data(
+        X,
+        y
+    )
+
+    # Train models
+    best_model, best_name, results, cv_scores = train_models(
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        feature_names
+    )
+
+    print("\nResults:")
+    for r in results:
+        print(r)
+
+    if best_name == "Logistic Regression":
+
+        feature_importance = pd.DataFrame({
+            "feature": feature_names,
+            "importance": np.abs(
+                best_model.named_steps["clf"].coef_[0]
+            )
+        }).sort_values(
+            "importance",
+            ascending=False
+        )
+
+        print("\nTop 15 Important Features:")
+        print(feature_importance.head(15))
 
 if __name__ == "__main__":
     main()
