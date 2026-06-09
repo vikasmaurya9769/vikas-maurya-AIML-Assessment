@@ -17,7 +17,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,
-    f1_score, roc_auc_score, classification_report,
+    f1_score, roc_auc_score, roc_curve,
     confusion_matrix
 )
 from sklearn.utils.class_weight import compute_class_weight
@@ -494,6 +494,150 @@ def plot_feature_importance(feature_importance):
         "Saved feature importance plot"
     )
 
+
+
+def save_metrics(results, cv_scores):
+
+    os.makedirs("outputs/model", exist_ok=True)
+
+    metrics_data = {
+        "models": results,
+        "cv_f1_mean": float(cv_scores.mean()),
+        "cv_f1_std": float(cv_scores.std())
+    }
+
+    with open(
+        "outputs/model/model_metrics.json",
+        "w"
+    ) as f:
+        json.dump(
+            metrics_data,
+            f,
+            indent=4
+        )
+
+    log.info(
+        "Saved model_metrics.json"
+    )
+
+
+
+def plot_confusion_matrix(
+    model,
+    X_test,
+    y_test
+):
+
+    os.makedirs(
+        "outputs/model",
+        exist_ok=True
+    )
+
+    y_pred = model.predict(X_test)
+
+    cm = confusion_matrix(
+        y_test,
+        y_pred
+    )
+
+    plt.figure(figsize=(6,5))
+
+    plt.imshow(cm)
+
+    plt.title(
+        "Confusion Matrix"
+    )
+
+    plt.colorbar()
+
+    plt.xlabel(
+        "Predicted"
+    )
+
+    plt.ylabel(
+        "Actual"
+    )
+
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(
+                j,
+                i,
+                cm[i, j],
+                ha="center"
+            )
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "outputs/model/confusion_matrix.png"
+    )
+
+    plt.close()
+
+    log.info(
+        "Saved confusion_matrix.png"
+    )
+
+
+def plot_roc_curve(
+    model,
+    X_test,
+    y_test
+):
+
+    os.makedirs(
+        "outputs/model",
+        exist_ok=True
+    )
+
+    y_proba = model.predict_proba(
+        X_test
+    )[:, 1]
+
+    fpr, tpr, _ = roc_curve(
+        y_test,
+        y_proba
+    )
+
+    plt.figure(figsize=(6,5))
+
+    plt.plot(
+        fpr,
+        tpr
+    )
+
+    plt.plot(
+        [0,1],
+        [0,1],
+        "--"
+    )
+
+    plt.xlabel(
+        "False Positive Rate"
+    )
+
+    plt.ylabel(
+        "True Positive Rate"
+    )
+
+    plt.title(
+        "ROC Curve"
+    )
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "outputs/model/roc_curve.png"
+    )
+
+    plt.close()
+
+    log.info(
+        "Saved roc_curve.png"
+    )
+
+
 def main():
 
     # Load data
@@ -553,6 +697,23 @@ def main():
 
         plot_feature_importance(
             feature_importance
+        )
+
+        save_metrics(
+            results,
+            cv_scores
+        )
+
+        plot_confusion_matrix(
+            best_model,
+            X_test,
+            y_test
+        )
+
+        plot_roc_curve(
+            best_model,
+            X_test,
+            y_test
         )
 
 if __name__ == "__main__":
