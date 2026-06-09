@@ -469,6 +469,31 @@ def train_models(X_train, X_test, y_train, y_test, feature_names):
 
     return best_model, best_name, results, cv_scores
 
+def plot_feature_importance(feature_importance):
+
+    top_features = feature_importance.head(15)
+
+    plt.figure(figsize=(10, 6))
+
+    plt.barh(
+        top_features["feature"],
+        top_features["importance"]
+    )
+
+    plt.title("Top 15 Feature Importances")
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "outputs/model/feature_importance.png"
+    )
+
+    plt.close()
+
+    log.info(
+        "Saved feature importance plot"
+    )
+
 def main():
 
     # Load data
@@ -525,6 +550,10 @@ def main():
 
         print("\nTop 15 Important Features:")
         print(feature_importance.head(15))
+
+        plot_feature_importance(
+            feature_importance
+        )
 
 if __name__ == "__main__":
     main()
