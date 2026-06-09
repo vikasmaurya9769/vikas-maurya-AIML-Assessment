@@ -205,6 +205,19 @@ def engineer_features(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.Dat
     numeric_agg_cols = [c for c in agg.columns if c != "lead_id"]
     df[numeric_agg_cols] = df[numeric_agg_cols].fillna(0)
 
+    if "return_visitor_flag" in df.columns:
+        df["return_visitor_flag"] = (
+            df["return_visitor_flag"]
+            .astype(str)
+            .str.lower()
+            .map({
+                "true": 1,
+                "false": 0,
+                "yes": 1,
+                "no": 0
+            })
+            .fillna(0)
+        )
     log.info(
     "Created %d engineered features",
     df.shape[1] - len(leads.columns)
@@ -216,6 +229,106 @@ def engineer_features(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.Dat
     )
 
     return df
+
+'''def main():
+
+    leads, interactions = load_data(
+        LEADS_PATH,
+        INTERACTIONS_PATH
+    )
+
+    leads = derive_target(
+        leads,
+        interactions
+    )
+
+    df = engineer_features(
+        leads,
+        interactions
+    )
+
+    log.info("Feature engineering completed successfully")
+'''
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. PREPROCESSING
+# ─────────────────────────────────────────────────────────────────────────────
+
+def preprocess(df: pd.DataFrame):
+    """
+    Encode categoricals and select model features.
+    Returns X (features), y (target), and the feature column names.
+    """
+    log.info("Preprocessing features...")
+
+    # Columns to drop (IDs, raw text, target, and LEAKY features)
+    # IMPORTANT: demo_requests, free_trial_starts, contact_form_submits, forms_completed
+    # are used to DEFINE the target variable, so they must be excluded to prevent data leakage.
+    drop_cols = [
+    "lead_id",
+    "business_email",
+    "city",
+    "state",
+    "campaign",
+    "browser",
+    "annual_revenue_band",
+    "screen_size",
+    "created_at",
+    "converted"
+]
+
+    categorical_to_encode = [
+        "source", "lead_segment", "company_size", "industry",
+        "funding_stage", "job_role", "account_type",
+        "device_type", "employee_growth_band", "region", "first_touch_channel"
+    ]
+
+    df_model = df.drop(columns=[c for c in drop_cols if c in df.columns], errors="ignore").copy()
+
+    # Label-encode categoricals
+    le = LabelEncoder()
+    for col in categorical_to_encode:
+        if col in df_model.columns:
+            encoder = LabelEncoder()
+            df_model[col] = encoder.fit_transform(
+                df_model[col].astype(str)
+            )
+
+    # Drop any remaining object columns
+    obj_cols = df_model.select_dtypes(include="object").columns.tolist()
+    if obj_cols:
+        log.warning("Dropping remaining object columns: %s", obj_cols)
+        df_model.drop(columns=obj_cols, inplace=True)
+
+    # Drop boolean columns that may cause issues
+    bool_cols = df_model.select_dtypes(include="bool").columns.tolist()
+    for col in bool_cols:
+        df_model[col] = df_model[col].astype(int)
+
+    if df_model.isnull().sum().sum() > 0:
+        log.warning(
+            "Remaining missing values detected. Filling with 0."
+        )
+        df_model = df_model.fillna(0)
+    y = df["converted"].values
+    X = df_model.values
+    feature_names = df_model.columns.tolist()
+
+    log.info(
+    "Final feature count: %d | Samples: %d",
+    X.shape[1],
+    X.shape[0]
+    )
+
+    log.info(
+        "Target distribution: %d converted / %d total",
+        y.sum(),
+        len(y)
+    )
+    return X, y, feature_names
+
 
 def main():
 
@@ -234,8 +347,11 @@ def main():
         interactions
     )
 
-    log.info("Feature engineering completed successfully")
+    X, y, feature_names = preprocess(df)
 
+    print("X Shape:", X.shape)
+    print("Y Shape:", y.shape)
+    print("Features:", len(feature_names))
 
 if __name__ == "__main__":
     main()
