@@ -22,16 +22,26 @@ label_encoders = artifact["label_encoders"]
 @app.get("/")
 def root():
     return {
-        "message": "Lead Conversion Prediction API is running",
-        "model_loaded": model is not None,
-        "num_features": len(feature_names)
+        "message": "Lead Conversion Prediction API",
+        "version": "1.0.0",
+        "model": "Random Forest",
+        "features_used": 10,
+        "endpoints": [
+            "/predict",
+            "/explain",
+            "/health"
+        ]
     }
-
 
 @app.get("/health")
 def health():
     return {
-        "status": "healthy"
+        "status": "healthy",
+        "model_loaded": model is not None,
+        "model_type": type(model).__name__,
+        "feature_count": len(feature_names),
+        "supported_source_values": list(label_encoders["source"].classes_),
+        "supported_company_sizes": list(label_encoders["company_size"].classes_)
     }
 
 
@@ -93,6 +103,7 @@ class PredictionResponse(BaseModel):
     prediction: str
     conversion_probability: float
     confidence: str
+    risk_level: str
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
@@ -133,3 +144,52 @@ def predict(request: PredictionRequest):
             status_code=400,
             detail=str(exc)
         )
+    
+class ExplainRequest(BaseModel):
+    conversion_probability: float
+    session_count: int
+    pricing_page_views: int
+    webinar_registrations: int
+    max_funnel_order: int
+    total_events: int
+
+@app.post("/explain")
+def explain(request: ExplainRequest):
+
+    reasons = []
+
+    if request.pricing_page_views > 0:
+        reasons.append(
+            "The lead viewed pricing-related content, indicating purchase intent."
+        )
+
+    if request.webinar_registrations > 0:
+        reasons.append(
+            "The lead registered for a webinar, suggesting active engagement."
+        )
+
+    if request.max_funnel_order >= 4:
+        reasons.append(
+            "The lead progressed to the decision stage of the sales funnel."
+        )
+
+    if request.session_count >= 4:
+        reasons.append(
+            "Multiple sessions indicate continued interest in the product."
+        )
+
+    if request.total_events >= 15:
+        reasons.append(
+            "A high number of interactions reflects strong engagement."
+        )
+
+    if not reasons:
+        reasons.append(
+            "The lead shows moderate activity with limited high-intent signals."
+        )
+
+    summary = " ".join(reasons)
+
+    return {
+        "summary": summary
+    }
