@@ -250,6 +250,7 @@ def preprocess(df: pd.DataFrame):
         "funding_stage", "job_role", "account_type",
         "device_type", "employee_growth_band", "region", "first_touch_channel"
     ]
+    
 
     df_model = df.drop(columns=[c for c in drop_cols if c in df.columns], errors="ignore").copy()
 
@@ -279,6 +280,23 @@ def preprocess(df: pd.DataFrame):
             "Remaining missing values detected. Filling with 0."
         )
         df_model = df_model.fillna(0)
+
+    # Keep only the most important features
+    selected_features = [
+        "source",
+        "company_size",
+        "session_count",
+        "total_events",
+        "total_time_seconds",
+        "pricing_page_views",
+        "webinar_registrations",
+        "max_funnel_order",
+        "return_visitor_flag",
+        "total_clicks"
+    ]
+
+    df_model = df_model[selected_features]
+
     y = df["converted"].values
     X = df_model.values
     feature_names = df_model.columns.tolist()
@@ -573,47 +591,60 @@ def main():
         print(r)
 
     if best_name == "Logistic Regression":
-
         feature_importance = pd.DataFrame({
             "feature": feature_names,
             "importance": np.abs(
                 best_model.named_steps["clf"].coef_[0]
             )
-        }).sort_values(
-            "importance",
-            ascending=False
-        )
+        })
 
-        print("\nTop 15 Important Features:")
-        print(feature_importance.head(15))
+    elif best_name == "Random Forest":
+        feature_importance = pd.DataFrame({
+            "feature": feature_names,
+            "importance": best_model.feature_importances_
+        })
 
-        plot_feature_importance(
-            feature_importance
-        )
+    elif best_name == "XGBoost":
+        feature_importance = pd.DataFrame({
+            "feature": feature_names,
+            "importance": best_model.feature_importances_
+        })
 
-        save_metrics(
-            results,
-            cv_scores
-        )
+    elif best_name == "Gradient Boosting":
+        feature_importance = pd.DataFrame({
+            "feature": feature_names,
+            "importance": best_model.feature_importances_
+        })
 
-        plot_confusion_matrix(
-            best_model,
-            X_test,
-            y_test
-        )
+    feature_importance = feature_importance.sort_values(
+        by="importance",
+        ascending=False
+    )
 
-        plot_roc_curve(
-            best_model,
-            X_test,
-            y_test
-        )
-        
-
-        artifact = joblib.load("models/model.pkl")
-        print(artifact.keys())
-
-        print(artifact["feature_names"])
-        print(len(feature_names))
+    print("\nTop 15 Important Features:")
+    print(feature_importance.head(15))
+    plot_feature_importance(
+        feature_importance
+    )
+    save_metrics(
+        results,
+        cv_scores
+    )
+    plot_confusion_matrix(
+        best_model,
+        X_test,
+        y_test
+    )
+    plot_roc_curve(
+        best_model,
+        X_test,
+        y_test
+    )
+    
+    artifact = joblib.load("models/model.pkl")
+    print(artifact.keys())
+    print(artifact["feature_names"])
+    print(len(feature_names))
 
 if __name__ == "__main__":
     main()

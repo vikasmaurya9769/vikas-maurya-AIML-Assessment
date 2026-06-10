@@ -2,37 +2,37 @@
     "models": [
         {
             "model": "Logistic Regression",
-            "accuracy": 0.9358,
-            "precision": 0.8652,
-            "recall": 0.9457,
-            "f1": 0.9037,
-            "auc_roc": 0.9805
+            "accuracy": 0.9037,
+            "precision": 0.7848,
+            "recall": 0.9612,
+            "f1": 0.8641,
+            "auc_roc": 0.972
         },
         {
             "model": "Random Forest",
             "accuracy": 0.9309,
-            "precision": 0.8686,
-            "recall": 0.9225,
-            "f1": 0.8947,
-            "auc_roc": 0.9802
+            "precision": 0.8435,
+            "recall": 0.9612,
+            "f1": 0.8986,
+            "auc_roc": 0.9817
         },
         {
             "model": "Gradient Boosting",
-            "accuracy": 0.9333,
-            "precision": 0.8864,
-            "recall": 0.907,
-            "f1": 0.8966,
-            "auc_roc": 0.9871
+            "accuracy": 0.9259,
+            "precision": 0.8779,
+            "recall": 0.8915,
+            "f1": 0.8846,
+            "auc_roc": 0.9832
         },
         {
             "model": "XGBoost",
-            "accuracy": 0.9333,
-            "precision": 0.875,
-            "recall": 0.9225,
-            "f1": 0.8981,
-            "auc_roc": 0.9854
+            "accuracy": 0.916,
+            "precision": 0.8626,
+            "recall": 0.876,
+            "f1": 0.8692,
+            "auc_roc": 0.9821
         }
     ],
-    "cv_f1_mean": 0.8980633024236904,
-    "cv_f1_std": 0.018598349191967515
+    "cv_f1_mean": 0.9020953553309425,
+    "cv_f1_std": 0.011549959910515975
 }
