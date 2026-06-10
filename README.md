@@ -1,30 +1,61 @@
-# Lead Conversion Prediction System
- 
-**AI/ML Engineer Assessment — Vynqe**  
-Developed by **Vikas Maurya**
- 
+# 🎯 Lead Conversion Prediction System
+### AI/ML Engineer Assessment — Vynqe
+**Developed by:** [Vikas Maurya](https://github.com/vikasmaurya)
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
+[![XGBoost](https://img.shields.io/badge/XGBoost-2.0+-orange.svg)](https://xgboost.ai/)
+
 ---
- 
+
+## 🚀 Live Demo
+
+* **Deployed API:** [https://vikas-maurya-aiml-assessment.onrender.com](https://vikas-maurya-aiml-assessment.onrender.com)
+* **Interactive Swagger UI:** Append `/docs` to the live URL
+* **Health Check Endpoint:** Append `/health` to the live URL
+
+> 💡 **Note:** The free tier of Render automatically spins down services after periods of inactivity. Your first request may take 20–30 seconds to wake up the server.
+
+---
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [System Architecture & Features](#-system-architecture--features)
+- [Project Structure](#-project-structure)
+- [Tech Stack](#-tech-stack)
+- [Quick Start & Local Setup](#-quick-start--local-setup)
+- [Model Training Pipeline](#-model-training-pipeline)
+- [API Production Deployment](#-api-production-deployment)
+- [API Endpoints Specification](#-api-endpoints-specification)
+- [Model Performance & Evaluation](#-model-performance--evaluation)
+- [Key Insights from EDA](#-key-insights-from-eda)
+- [Data Leakage Guardrails](#-data-leakage-guardrails)
+- [Limitations & Roadmap](#-limitations--roadmap)
+- [Author](#-author)
+
+---
+
 ## Overview
- 
-This project tackles a real sales problem: given a lead's profile and their behavioral activity on the platform, how likely are they to convert into a paying customer?
- 
-The system combines exploratory data analysis, feature engineering, machine learning, and a FastAPI inference layer to deliver real-time conversion scores and human-readable explanations. The entire pipeline — from raw CSVs to a running API — is reproducible with two commands.
- 
+
+This system addresses a core B2B growth problem: **identifying high-value leads based on firmographic profiles and behavioral intent data.**
+
+By blending exploratory data analysis (EDA), rigorous target variable engineering, robust data leakage prevention, and automated machine learning selection, this end-to-end framework delivers high-accuracy conversion scores alongside human-readable feature explanations via a high-performance REST API. 
+
 ---
- 
-## What's Inside
- 
-- Full exploratory data analysis with visualizations (`notebooks/EDA.ipynb`, `analysis.md`)
-- Custom target variable creation derived from high-intent interaction events
-- Comparison of four ML models with automatic best-model selection
-- FastAPI REST service with `/predict` and `/explain` endpoints
-- Feature importance, confusion matrix, and ROC curve outputs
+
+## 🛠️ System Features
+
+* **Target Label Synthesis:** Automates the creation of an explicit target variable derived strictly from high-intent downstream events.
+* **AutoML Selection Pipeline:** Evaluates and benchmarks four competitive algorithms, choosing the optimal checkpoint based on macro F1-score optimization.
+* **Production REST Layer:** Low-latency inference powered by FastAPI, featuring complete runtime schema validation via Pydantic.
+* **Explainable AI Hook:** Provides immediate, clear qualitative explanations for generated probability scores to bridge the gap between ML outputs and sales operations.
+
 ---
- 
-## Project Structure
- 
-```
+
+## 📂 Project Structure
+
+```text
 vikas-maurya-AIML-Assessment/
 ├── README.md
 ├── analysis.md
@@ -32,33 +63,26 @@ vikas-maurya-AIML-Assessment/
 ├── train.py
 ├── app.py
 ├── data/
-│   ├── leads (1).csv
-│   └── interactions (1).csv.
+│   ├── leads (1).csv                
+│   └── interactions (1).csv         
 ├── models/
-│   └── model.pkl
+│   └── model.pkl                 # Best performing serialized model
 ├── notebooks/
-│   └── EDA.ipynb
+│   └── EDA.ipynb                 # Interactive data exploration
 ├── outputs/
-│   ├── eda/
+│   ├── eda/                      # Visual distributions & behavioral metrics
 │   │   ├── conversion_distribution.png
 │   │   ├── conversion_by_source.png
 │   │   ├── conversion_by_segment.png
-│   │   ├── conversion_by_industry.png
-│   │   ├── conversion_by_funding_stage.png
-│   │   ├── conversion_by_job_role.png
-│   │   ├── funnel_conversion.png
-│   │   ├── session_behavior.png
-│   │   └── missing_values_leads.png
-│   └── model/
+│   │   └── ...
+│   └── model/                    # Visual evaluation metrics
 │       ├── model_metrics.json
 │       ├── feature_importance.png
 │       ├── confusion_matrix.png
 │       └── roc_curve.png
 └── .gitignore
 ```
- 
----
- 
+
 ## Tech Stack
  
 - **Python 3.10+**
@@ -69,7 +93,7 @@ vikas-maurya-AIML-Assessment/
 - **Pydantic** — request/response validation
 - **Matplotlib, Seaborn** — visualizations
 - **Joblib** — model serialization
----
+
  
 ## Setup
  
@@ -104,8 +128,8 @@ Place the provided CSV files into the `data/` folder:
  
 ```
 data/
-├── leads.csv
-└── interactions.csv
+├── leads (1).csv
+└── interactions (1).csv
 ```
  
 These files are excluded from the repository via `.gitignore`.
