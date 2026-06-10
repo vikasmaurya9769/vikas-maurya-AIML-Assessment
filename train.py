@@ -268,13 +268,14 @@ def preprocess(df: pd.DataFrame):
     df_model = df.drop(columns=[c for c in drop_cols if c in df.columns], errors="ignore").copy()
 
     # Label-encode categoricals
-    le = LabelEncoder()
+    encoders = {}
     for col in categorical_to_encode:
         if col in df_model.columns:
             encoder = LabelEncoder()
             df_model[col] = encoder.fit_transform(
                 df_model[col].astype(str)
             )
+            encoders[col] = encoder
 
     # Drop any remaining object columns
     obj_cols = df_model.select_dtypes(include="object").columns.tolist()
@@ -307,7 +308,7 @@ def preprocess(df: pd.DataFrame):
         y.sum(),
         len(y)
     )
-    return X, y, feature_names
+    return X, y, feature_names, encoders
 
 
 
@@ -605,25 +606,27 @@ def plot_roc_curve(
 
 def save_model_artifacts(
     best_model,
-    feature_names
+    feature_names,
+    encoders
 ):
     os.makedirs(
         "models",
         exist_ok=True
     )
 
-    joblib.dump(
-        best_model,
-        "models/best_model.pkl"
-    )
+    artifact = {
+        "model": best_model,
+        "feature_names": feature_names,
+        "label_encoders": encoders
+    }
 
     joblib.dump(
-        feature_names,
-        "models/feature_names.pkl"
+        artifact,
+        "models/model.pkl"
     )
 
     log.info(
-        "Saved model artifacts successfully"
+        "Saved model artifact successfully"
     )
 
 
@@ -648,7 +651,7 @@ def main():
     )
 
     # Preprocessing
-    X, y, feature_names = preprocess(df)
+    X, y, feature_names, encoders = preprocess(df)
 
     # Train-test split
     X_train, X_test, y_train, y_test = split_data(
@@ -666,9 +669,10 @@ def main():
     )
 
     save_model_artifacts(
-        best_model,
-        feature_names
-    )
+    best_model,
+    feature_names,
+    encoders
+)
 
     print("\nResults:")
     for r in results:
