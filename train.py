@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
+import joblib
 
 from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
 from sklearn.preprocessing import StandardScaler, LabelEncoder
@@ -713,6 +714,13 @@ def main():
             X_test,
             y_test
         )
+        
+
+        artifact = joblib.load("models/model.pkl")
+        print(artifact.keys())
+
+        print(artifact["feature_names"])
+        print(len(feature_names))
 
 if __name__ == "__main__":
     main()
