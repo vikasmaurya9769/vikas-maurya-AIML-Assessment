@@ -209,10 +209,7 @@ def engineer_features(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.Dat
 
     if "return_visitor_flag" in df.columns:
         df["return_visitor_flag"] = (
-            df["return_visitor_flag"]
-            .astype(str)
-            .str.lower()
-            .map({
+            df["return_visitor_flag"].astype(str).str.lower().map({
                 "true": 1,
                 "false": 0,
                 "yes": 1,
@@ -220,16 +217,12 @@ def engineer_features(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.Dat
             })
             .fillna(0)
         )
-    log.info(
-    "Created %d engineered features",
-    df.shape[1] - len(leads.columns)
-    )
+    log.info("Created %d engineered features", df.shape[1] - len(leads.columns) )
 
     log.info(
         "Feature matrix shape after engineering: %s",
         df.shape
     )
-
     return df
 
 
@@ -248,17 +241,9 @@ def preprocess(df: pd.DataFrame):
     # IMPORTANT: demo_requests, free_trial_starts, contact_form_submits, forms_completed
     # are used to DEFINE the target variable, so they must be excluded to prevent data leakage.
     drop_cols = [
-    "lead_id",
-    "business_email",
-    "city",
-    "state",
-    "campaign",
-    "browser",
-    "annual_revenue_band",
-    "screen_size",
-    "created_at",
-    "converted"
-]
+    "lead_id", "business_email", "city", "state", "campaign",
+    "browser", "annual_revenue_band", "screen_size",
+    "created_at", "converted" ]
 
     categorical_to_encode = [
         "source", "lead_segment", "company_size", "industry",
@@ -305,10 +290,7 @@ def preprocess(df: pd.DataFrame):
     )
 
     log.info(
-        "Target distribution: %d converted / %d total",
-        y.sum(),
-        len(y)
-    )
+        "Target distribution: %d converted / %d total", y.sum(), len(y) )
     return X, y, feature_names, encoders
 
 
@@ -319,13 +301,7 @@ def preprocess(df: pd.DataFrame):
 
 def split_data(X, y):
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.20,
-        stratify=y,
-        random_state=42
-    )
+    X_train, X_test, y_train, y_test = train_test_split( X, y, test_size=0.20, stratify=y, random_state=42 )
 
     log.info(
         "Train shape: %s | Test shape: %s",
@@ -436,27 +412,17 @@ def train_models(X_train, X_test, y_train, y_test, feature_names):
 
     return best_model, best_name, results, cv_scores
 
+
 def plot_feature_importance(feature_importance):
-
     top_features = feature_importance.head(15)
-
     plt.figure(figsize=(10, 6))
-
     plt.barh(
         top_features["feature"],
-        top_features["importance"]
-    )
-
+        top_features["importance"] )
     plt.title("Top 15 Feature Importances")
-
     plt.tight_layout()
-
-    plt.savefig(
-        "outputs/model/feature_importance.png"
-    )
-
+    plt.savefig( "outputs/model/feature_importance.png" )
     plt.close()
-
     log.info(
         "Saved feature importance plot"
     )
@@ -464,152 +430,79 @@ def plot_feature_importance(feature_importance):
 
 
 def save_metrics(results, cv_scores):
-
     os.makedirs("outputs/model", exist_ok=True)
-
     metrics_data = {
         "models": results,
         "cv_f1_mean": float(cv_scores.mean()),
         "cv_f1_std": float(cv_scores.std())
     }
-
-    with open(
-        "outputs/model/model_metrics.json",
-        "w"
-    ) as f:
+    with open( "outputs/model/model_metrics.json", "w") as f:
         json.dump(
-            metrics_data,
-            f,
-            indent=4
+            metrics_data, f, indent=4
         )
-
     log.info(
         "Saved model_metrics.json"
     )
 
 
 
-def plot_confusion_matrix(
-    model,
-    X_test,
-    y_test
-):
-
+def plot_confusion_matrix( model, X_test, y_test ):
     os.makedirs(
         "outputs/model",
-        exist_ok=True
-    )
+        exist_ok=True)
 
     y_pred = model.predict(X_test)
-
     cm = confusion_matrix(
         y_test,
-        y_pred
-    )
-
+        y_pred)
     plt.figure(figsize=(6,5))
-
     plt.imshow(cm)
-
-    plt.title(
-        "Confusion Matrix"
-    )
-
+    plt.title( "Confusion Matrix")
     plt.colorbar()
-
-    plt.xlabel(
-        "Predicted"
-    )
-
-    plt.ylabel(
-        "Actual"
-    )
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
 
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
-            plt.text(
-                j,
-                i,
-                cm[i, j],
-                ha="center"
-            )
+            plt.text(j, i, cm[i, j], ha="center" )
 
     plt.tight_layout()
-
     plt.savefig(
         "outputs/model/confusion_matrix.png"
     )
-
     plt.close()
-
     log.info(
-        "Saved confusion_matrix.png"
-    )
+        "Saved confusion_matrix.png" )
 
 
-def plot_roc_curve(
-    model,
-    X_test,
-    y_test
-):
-
+def plot_roc_curve( model, X_test, y_test ):
     os.makedirs(
         "outputs/model",
-        exist_ok=True
-    )
+        exist_ok=True )
 
-    y_proba = model.predict_proba(
-        X_test
-    )[:, 1]
+    y_proba = model.predict_proba(X_test)[:, 1]
 
-    fpr, tpr, _ = roc_curve(
-        y_test,
-        y_proba
-    )
+    fpr, tpr, _ = roc_curve(y_test, y_proba)
 
     plt.figure(figsize=(6,5))
-
-    plt.plot(
-        fpr,
-        tpr
-    )
-
+    plt.plot( fpr, tpr )
     plt.plot(
         [0,1],
         [0,1],
-        "--"
-    )
+        "--" )
 
-    plt.xlabel(
-        "False Positive Rate"
-    )
-
-    plt.ylabel(
-        "True Positive Rate"
-    )
-
-    plt.title(
-        "ROC Curve"
-    )
-
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("ROC Curve")
     plt.tight_layout()
-
     plt.savefig(
-        "outputs/model/roc_curve.png"
-    )
-
+        "outputs/model/roc_curve.png" )
     plt.close()
-
     log.info(
-        "Saved roc_curve.png"
-    )
+        "Saved roc_curve.png")
 
 
-def save_model_artifacts(
-    best_model,
-    feature_names,
-    encoders
-):
+def save_model_artifacts( best_model, feature_names, encoders ):
     os.makedirs(
         "models",
         exist_ok=True
