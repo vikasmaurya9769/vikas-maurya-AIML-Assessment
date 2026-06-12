@@ -1,9 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import math
 import numpy as np
 from fastapi import HTTPException
-
 import joblib
 
 app = FastAPI(
@@ -45,9 +43,6 @@ def health():
     }
 
 
-
-from pydantic import BaseModel
-
 class PredictionRequest(BaseModel):
     source: str
     company_size: str
@@ -64,10 +59,6 @@ class PredictionRequest(BaseModel):
 
     total_clicks: int
 
-import math
-import numpy as np
-
-import numpy as np
 
 def prepare_features(data: PredictionRequest):
     values = data.model_dump()

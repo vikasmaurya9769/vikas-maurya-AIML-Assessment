@@ -5,7 +5,7 @@ import warnings
 import joblib
 import numpy as np
 import pandas as pd
-import matplotlib
+import matplotlib 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -26,7 +26,7 @@ from xgboost import XGBClassifier
 
 warnings.filterwarnings("ignore")
 
-# ── Logging ──────────────────────────────────────────────────────────────────
+#Logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -34,17 +34,11 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
+# Paths 
 LEADS_PATH        = "data/leads (1).csv"
 INTERACTIONS_PATH = "data/interactions (1).csv"
-MODEL_PATH        = "model.pkl"
-METRICS_PATH      = "outputs/model_metrics.json"
-FI_PLOT_PATH      = "outputs/feature_importance.png"
 
-
-# ─────────────────────────────────────────────────────────────────────────────
 # 1. LOAD DATA
-# ─────────────────────────────────────────────────────────────────────────────
 
 def load_data(leads_path: str, interactions_path: str):
     """Load both CSVs and return as DataFrames."""
@@ -58,9 +52,7 @@ def load_data(leads_path: str, interactions_path: str):
     return leads, interactions
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 2. DERIVE TARGET VARIABLE
-# ─────────────────────────────────────────────────────────────────────────────
+# 2. DERIVE TARGET VARIABLE --------------------
 
 def derive_target(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.DataFrame:
     """
@@ -87,9 +79,7 @@ def derive_target(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.DataFra
     return leads
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 3. FEATURE ENGINEERING
-# ─────────────────────────────────────────────────────────────────────────────
+# 3. FEATURE ENGINEERING -----------------------------
 
 def engineer_features(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.DataFrame:
     """
@@ -104,15 +94,15 @@ def engineer_features(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.Dat
     """
     log.info("Engineering features...")
 
-    # ── Funnel ordering ──────────────────────────────────────────────────────
+    # Funnel ordering 
     funnel_order = {"Awareness": 1, "Consideration": 2, "Evaluation": 3, "Decision": 4}
     interactions = interactions.copy()
     interactions["funnel_order"] = interactions["funnel_stage"].map(funnel_order).fillna(1)
 
-    # ── Parse timestamps ─────────────────────────────────────────────────────
+    # Parse timestamps
     interactions["timestamp"] = pd.to_datetime(interactions["timestamp"], errors="coerce")
 
-    # ── Aggregate per lead ───────────────────────────────────────────────────
+    # Aggregate per lead
     agg = interactions.groupby("lead_id").agg(
     session_count=("session_id", "nunique"),
     total_events=("interaction_id", "count"),
@@ -226,9 +216,7 @@ def engineer_features(leads: pd.DataFrame, interactions: pd.DataFrame) -> pd.Dat
     return df
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 4. PREPROCESSING
-# ─────────────────────────────────────────────────────────────────────────────
+# 4. PREPROCESSING ---------------------------------
 
 def preprocess(df: pd.DataFrame):
     """
@@ -312,10 +300,7 @@ def preprocess(df: pd.DataFrame):
     return X, y, feature_names, encoders
 
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 5. TRAIN & EVALUATE MODELS
-# ─────────────────────────────────────────────────────────────────────────────
+# 5. TRAIN & EVALUATE MODELS ---------------------
 
 def split_data(X, y):
 
@@ -347,7 +332,7 @@ def evaluate_model(model, X_test, y_test, name: str) -> dict:
 
 def train_models(X_train, X_test, y_train, y_test, feature_names):
     """
-    Train Logistic Regression, Random Forest, and Gradient Boosting.
+    Train Logistic Regression, Random Forest, XGBoost and Gradient Boosting.
     Return the best model (by F1 score) and all results.
     """
     # Class weights to handle imbalance
