@@ -23,11 +23,11 @@ def root():
         "message": "Lead Conversion Prediction API",
         "version": "1.0.0",
         "model": "Random Forest",
-        "features_used": 10,
+        "features_used": 11,
         "endpoints": [
+            "/health",
             "/predict",
-            "/explain",
-            "/health"
+            "/explain"
         ]
     }
 
@@ -38,14 +38,12 @@ def health():
         "model_loaded": model is not None,
         "model_type": type(model).__name__,
         "feature_count": len(feature_names),
-        "supported_source_values": list(label_encoders["source"].classes_),
-        "supported_company_sizes": list(label_encoders["company_size"].classes_)
+        "supported_source_values": list(label_encoders["source"].classes_)
     }
 
 
 class PredictionRequest(BaseModel):
     source: str
-    company_size: str
 
     session_count: int
     total_events: int
@@ -55,16 +53,18 @@ class PredictionRequest(BaseModel):
     webinar_registrations: int
 
     max_funnel_order: int
-    return_visitor_flag: bool
-
     total_clicks: int
+
+    engagement_span_days: float
+    days_since_last_visit: float
+    avg_session_gap_days: float
 
 
 def prepare_features(data: PredictionRequest):
     values = data.model_dump()
 
     # Encode categorical columns
-    for col in ["source", "company_size"]:
+    for col in ["source"]:
         encoder = label_encoders[col]
 
         try:
@@ -76,11 +76,6 @@ def prepare_features(data: PredictionRequest):
                 f"Invalid value for '{col}'. "
                 f"Allowed values: {list(encoder.classes_)}"
             )
-
-    # Convert bool → int
-    values["return_visitor_flag"] = int(
-        values["return_visitor_flag"]
-    )
 
     # Build feature vector in training order
     feature_vector = [
@@ -111,7 +106,7 @@ def predict(request: PredictionRequest):
 
         if confidence_score >= 0.85:
             confidence = "high"
-        elif confidence_score >= 0.70:
+        elif confidence_score >= 0.60:
             confidence = "medium"
         else:
             confidence = "low"

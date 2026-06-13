@@ -312,7 +312,6 @@ def preprocess(df: pd.DataFrame):
         )
         df_model = df_model.fillna(0)
 
-    # Keep only the most important features
     selected_features = [
         "source",
         "session_count",
@@ -322,7 +321,7 @@ def preprocess(df: pd.DataFrame):
         "webinar_registrations",
         "max_funnel_order",
         "total_clicks",
-        "engagement_span_days",     # how long were they active (strongest)
+        "engagement_span_days",     # how long were they active
         "days_since_last_visit",    # are they still warm or gone cold
         "avg_session_gap_days",     # are they a consistent returner
     ]
